@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Tableau Cloud — Agent Concept</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;background:#F4F5F7;color:#1A1D23;font-size:14px;height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+:root{--blue:#1473E6;--blue-d:#0d66d0;--blue-l:#EAF3FE;--blue-m:#B8D5F7;--navy:#003666;--bg:#F4F5F7;--surface:#FFFFFF;--border:#E2E4E9;--border-m:#C8CCD6;--text:#1A1D23;--text-m:#5A6070;--text-l:#9299A8;--green:#1E7E5E;--green-l:#E8F7F2;--green-m:#A8DDD0;--red:#C5373E;--red-l:#FEF0F1;--amber:#B86A00;--amber-l:#FEF5E7;--amber-m:#F5C842;--slack:#4A154B;--slack-l:#F8EEF9;--sf:#0070D2;--sf-l:#EAF3FF;}
+.nav{height:46px;background:var(--navy);display:flex;align-items:center;padding:0 18px;gap:14px;flex-shrink:0;}
+.nav-logo{display:flex;align-items:center;gap:8px;color:#fff;font-size:14px;font-weight:600;}
+.nav-links{display:flex;gap:2px;}
+.nav-link{color:rgba(255,255,255,0.65);font-size:12.5px;padding:5px 10px;border-radius:5px;cursor:pointer;}
+.nav-link:hover,.nav-link.active{background:rgba(255,255,255,0.14);color:#fff;}
+.nav-r{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.nav-av{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.subnav{height:38px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;flex-shrink:0;}
+.snav-tab{padding:0 14px;height:100%;display:flex;align-items:center;font-size:12.5px;color:var(--text-m);cursor:pointer;border-bottom:2px solid transparent;}
+.snav-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:500;}
+.snav-sp{flex:1;}
+.mode-pill{display:inline-flex;align-items:center;gap:5px;background:var(--blue-l);color:var(--blue);border:1px solid var(--blue-m);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;user-select:none;}
+.trust-pill{display:inline-flex;align-items:center;gap:5px;background:var(--green-l);color:var(--green);border:1px solid var(--green-m);border-radius:20px;padding:3px 10px;font-size:11px;margin-left:7px;}
+.layout{display:flex;flex:1;overflow:hidden;}
+.sidebar{width:210px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;}
+.sidebar::-webkit-scrollbar{width:3px;}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);}
+.sb-hdr{padding:12px 14px 8px;display:flex;align-items:center;justify-content:space-between;}
+.sb-hdr-t{font-size:10.5px;font-weight:700;color:var(--text-l);text-transform:uppercase;letter-spacing:.07em;}
+.sb-sec{padding:8px 14px 3px;font-size:9.5px;font-weight:700;color:var(--text-l);text-transform:uppercase;letter-spacing:.07em;}
+.proj{padding:7px 14px;cursor:pointer;border-left:2.5px solid transparent;}
+.proj:hover{background:var(--bg);}
+.proj.active{background:var(--blue-l);border-left-color:var(--blue);}
+.proj-name{font-size:12px;font-weight:500;color:var(--text);margin-bottom:2px;}
+.proj-meta{font-size:10px;color:var(--text-l);margin-bottom:3px;}
+.proj-tags{display:flex;gap:3px;flex-wrap:wrap;}
+.ptag{font-size:9px;padding:1px 5px;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text-m);}
+.sb-div{height:1px;background:var(--border);margin:5px 0;}
+.canvas{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;position:relative;}
+.home-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;}
+.home-greet{font-size:24px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.home-sub{font-size:13.5px;color:var(--text-m);margin-bottom:32px;text-align:center;max-width:440px;line-height:1.55;}
+.search-wrap{width:100%;max-width:600px;margin-bottom:14px;}
+.search-box{display:flex;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--border-m);border-radius:14px;padding:10px 14px;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.search-box:focus-within{border-color:var(--blue);}
+.search-box input{flex:1;border:none;outline:none;font-family:inherit;font-size:14px;color:var(--text);background:transparent;}
+.search-box input::placeholder{color:var(--text-l);}
+.search-send{width:32px;height:32px;background:var(--blue);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:16px;flex-shrink:0;}
+.search-send:hover{background:var(--blue-d);}
+.cap-grid{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:620px;}
+.cap-btn{display:flex;align-items:center;gap:7px;padding:9px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px;color:var(--text-m);font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,0.06);}
+.cap-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-l);}
+.thread-state{flex:1;display:none;flex-direction:column;overflow:hidden;}
+.thread-state.visible{display:flex;}
+.ctx-bar{padding:5px 16px;background:#F0F7FF;border-bottom:1px solid var(--blue-m);display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--text-m);flex-wrap:wrap;flex-shrink:0;}
+.ctx-chip{background:var(--surface);border:1px solid var(--blue-m);border-radius:20px;padding:2px 8px;font-size:10px;color:#185FA5;}
+.ctx-chip.proj{background:var(--blue-l);font-weight:600;}
+.thread{flex:1;overflow-y:auto;padding:20px 20px 12px;display:flex;flex-direction:column;gap:14px;}
+.thread::-webkit-scrollbar{width:4px;}
+.thread::-webkit-scrollbar-thumb{background:var(--border-m);}
+.msg-row{display:flex;gap:10px;align-items:flex-start;}
+.msg-row.user{justify-content:flex-end;}
+.av{width:30px;height:30px;border-radius:50%;background:var(--blue);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.bubble{padding:10px 14px;font-size:13px;line-height:1.55;}
+.bubble.agent{background:var(--surface);border:1px solid var(--border);border-radius:2px 10px 10px 10px;max-width:540px;}
+.bubble.user{background:var(--blue);color:#fff;border-radius:10px 10px 2px 10px;max-width:380px;}
+.dots span{display:inline-block;width:6px;height:6px;background:var(--text-l);border-radius:50%;margin:0 2px;animation:db 1.1s infinite;}
+.dots span:nth-child(2){animation-delay:.18s;}
+.dots span:nth-child(3){animation-delay:.36s;}
+@keyframes db{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+.rich{padding-left:40px;display:flex;flex-direction:column;gap:8px;max-width:560px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.card-hdr{background:var(--bg);border-bottom:1px solid var(--border);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-size:12px;font-weight:600;color:var(--text);}
+.card-body{padding:12px;}
+.mets{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px;}
+.met{background:var(--bg);border-radius:5px;padding:8px 9px;}
+.met-l{font-size:9.5px;color:var(--text-l);margin-bottom:2px;}
+.met-v{font-size:15px;font-weight:600;color:var(--text);}
+.met-d{font-size:9.5px;margin-top:1px;}
+.up{color:var(--green);}.dn{color:var(--red);}
+.cbars{height:80px;display:flex;align-items:flex-end;gap:3px;margin-bottom:5px;}
+.cbar{flex:1;border-radius:2px 2px 0 0;min-width:0;}
+.clbls{display:flex;justify-content:space-between;font-size:9px;color:var(--text-l);}
+.fpills{display:flex;gap:5px;margin-top:8px;}
+.fpill{background:var(--blue-l);color:#185FA5;border:1px solid var(--blue-m);border-radius:20px;padding:2px 9px;font-size:11px;}
+.insight-list{display:flex;flex-direction:column;gap:5px;margin-top:8px;}
+.insight-item{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);font-size:12px;line-height:1.5;}
+.idot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.pulse-badge{display:inline-flex;align-items:center;gap:4px;background:#F3EFFE;color:#6B46C1;border:1px solid #C4B2EF;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:600;margin-bottom:8px;}
+.role-card{background:var(--surface);border:1.5px solid var(--blue-m);border-radius:8px;padding:12px;}
+.role-badge{display:inline-flex;align-items:center;gap:5px;background:var(--blue-l);color:var(--blue);border-radius:20px;padding:3px 10px;font-size:10.5px;font-weight:700;margin-bottom:8px;}
+.actions-list{display:flex;flex-direction:column;gap:6px;}
+.act-item{display:flex;align-items:flex-start;gap:9px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);}
+.act-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;margin-top:1px;}
+.act-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.act-desc{font-size:11.5px;color:var(--text-m);line-height:1.5;}
+.act-urg{font-size:10px;font-weight:600;padding:1px 7px;border-radius:10px;display:inline-flex;margin-top:3px;}
+.urg-now{background:var(--red-l);color:var(--red);}
+.urg-week{background:var(--amber-l);color:var(--amber);}
+.urg-strat{background:var(--blue-l);color:var(--blue);}
+.tsig{display:inline-flex;align-items:center;gap:5px;background:var(--green-l);color:var(--green);border:1px solid var(--green-m);border-radius:10px;padding:3px 9px;font-size:10px;margin-top:4px;}
+.act-strip{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.act-btn{display:flex;align-items:center;gap:5px;font-size:12px;padding:6px 12px;border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text-m);background:var(--surface);}
+.act-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-l);}
+.act-btn.slack{border-color:var(--slack);color:var(--slack);background:var(--slack-l);}
+.act-btn.sf{border-color:var(--sf);color:var(--sf);background:var(--sf-l);}
+.sugg-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.sugg{font-size:12px;padding:5px 12px;border:1px solid var(--border);border-radius:14px;cursor:pointer;color:var(--text-m);background:var(--surface);}
+.sugg:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-l);}
+.btn{font-size:12px;padding:5px 12px;border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--text-m);background:var(--surface);}
+.btn:hover{border-color:var(--blue);color:var(--blue);}
+.btn-p{background:var(--blue);color:#fff;border-color:var(--blue);}
+.btn-p:hover{background:var(--blue-d);color:#fff;}
+.nudge-card{border:1px solid var(--amber-m);border-radius:8px;overflow:hidden;max-width:540px;}
+.nudge-hdr{background:var(--amber-l);border-bottom:1px solid var(--amber-m);padding:7px 12px;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:600;color:var(--amber);}
+.nudge-body{padding:10px 12px;font-size:12.5px;line-height:1.55;}
+.slack-card{border:1px solid var(--slack);border-radius:8px;overflow:hidden;}
+.slack-hdr{background:var(--slack);padding:8px 12px;font-size:12px;font-weight:600;color:#fff;display:flex;align-items:center;gap:7px;}
+.slack-body{padding:10px 12px;font-size:12.5px;line-height:1.55;}
+.slack-ch{font-size:10px;color:var(--text-l);margin-bottom:4px;}
+.slack-img{margin-top:8px;height:60px;background:var(--bg);border:1px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-l);gap:6px;}
+.sf-card{border:1px solid var(--sf);border-radius:8px;overflow:hidden;}
+.sf-hdr{background:var(--sf);padding:8px 12px;font-size:12px;font-weight:600;color:#fff;}
+.sf-body{padding:10px 12px;}
+.sf-row{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border);}
+.sf-row:last-child{border:none;}
+.sf-l{color:var(--text-m);}
+.sf-v{font-weight:500;}
+.sf-chg{color:var(--blue);}
+.sf-was{color:var(--red);text-decoration:line-through;}
+.deck-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.deck-strip{display:flex;gap:8px;flex-wrap:wrap;padding:12px;}
+.dthumb{width:115px;border:1px solid var(--border);border-radius:5px;overflow:hidden;cursor:pointer;}
+.dthumb:hover{border-color:var(--blue);}
+.dthumb-img{height:64px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-l);gap:4px;border-bottom:1px solid var(--border);}
+.dthumb-lbl{padding:4px 6px;font-size:10px;color:var(--text-m);}
+.dthumb-add{width:115px;height:89px;border:1.5px dashed var(--border-m);border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;color:var(--text-l);cursor:pointer;gap:4px;}
+.dthumb-add:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-l);}
+.input-area{border-top:1px solid var(--border);padding:10px 16px 8px;background:var(--surface);flex-shrink:0;}
+.input-wrap{display:flex;align-items:center;gap:8px;background:var(--bg);border:1.5px solid var(--border-m);border-radius:14px;padding:7px 10px;margin-bottom:8px;}
+.input-wrap:focus-within{border-color:var(--blue);background:var(--surface);}
+.input-wrap input{flex:1;border:none;outline:none;font-family:inherit;font-size:13px;color:var(--text);background:transparent;}
+.input-wrap input::placeholder{color:var(--text-l);}
+.isend{width:28px;height:28px;background:var(--blue);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;flex-shrink:0;}
+.isend:hover{background:var(--blue-d);}
+.isend:disabled{background:var(--border-m);cursor:default;}
+.cap-row{display:flex;gap:6px;flex-wrap:wrap;}
+.cap-t{display:flex;align-items:center;gap:4px;padding:5px 11px;background:var(--surface);border:1px solid var(--border);border-radius:20px;cursor:pointer;font-size:11.5px;color:var(--text-m);font-weight:500;}
+.cap-t:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-l);}
+.prog-bar{display:flex;align-items:center;gap:7px;padding:5px 16px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;}
+.pdot{width:6px;height:6px;border-radius:50%;background:var(--border-m);}
+.pdot.done{background:var(--green);}
+.pdot.active{background:var(--blue);}
+.resume-card{background:var(--surface);border:1.5px solid var(--blue-m);border-radius:8px;overflow:hidden;}
+.resume-hdr{background:var(--blue-l);border-bottom:1px solid var(--blue-m);padding:9px 12px;display:flex;align-items:center;gap:8px;}
+.resume-title{font-size:13px;font-weight:700;color:#003666;}
+.rarts{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;}
+.rart{font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;color:var(--text-m);background:var(--bg);}
+.new-proj-card{background:var(--surface);border:1.5px solid var(--green-m);border-radius:8px;overflow:hidden;}
+.new-proj-hdr{background:var(--green-l);border-bottom:1px solid var(--green-m);padding:9px 12px;display:flex;align-items:center;gap:8px;}
+.new-proj-title{font-size:13px;font-weight:700;color:var(--green);}
+.connect-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:12px;}
+.conn-item{border:1px solid var(--border);border-radius:6px;padding:9px 7px;cursor:pointer;text-align:center;background:var(--bg);}
+.conn-item:hover{border-color:var(--blue);background:var(--blue-l);}
+.conn-icon{font-size:20px;margin-bottom:3px;}
+.conn-name{font-size:11px;font-weight:500;color:var(--text);}
+.conn-type{font-size:10px;color:var(--text-l);}
+.prep-steps{display:flex;flex-direction:column;gap:6px;padding:12px;}
+.prep-step{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);font-size:12px;cursor:pointer;}
+.prep-step:hover{border-color:var(--blue);background:var(--blue-l);}
+.prep-num{width:22px;height:22px;border-radius:50%;background:var(--blue-l);color:var(--blue);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.agent-builder{padding:12px;display:flex;flex-direction:column;gap:8px;}
+.af-label{font-size:10px;font-weight:600;color:var(--text-m);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
+.af-input{border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12.5px;color:var(--text);background:var(--bg);font-family:inherit;width:100%;}
+.af-input:focus{outline:none;border-color:var(--blue);background:var(--surface);}
+.tchips{display:flex;gap:5px;flex-wrap:wrap;}
+.tchip{font-size:11px;padding:4px 10px;border:1px solid var(--border);border-radius:20px;cursor:pointer;color:var(--text-m);background:var(--surface);}
+.tchip.sel{border-color:var(--blue);color:var(--blue);background:var(--blue-l);}
+.agent-preview{background:var(--blue-l);border:1px solid var(--blue-m);border-radius:6px;padding:9px 11px;font-size:12px;color:#185FA5;line-height:1.55;}
+.analyst-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,30,60,.45);backdrop-filter:blur(3px);z-index:200;display:flex;align-items:center;justify-content:center;}
+.analyst-panel{background:var(--surface);border-radius:14px;width:560px;max-width:calc(100vw - 40px);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.18);}
+.ap-hdr{background:linear-gradient(135deg,#003666 0%,#0d66d0 100%);padding:18px 20px 16px;position:relative;}
+.ap-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:4px;}
+.ap-sub{font-size:12.5px;color:rgba(255,255,255,.72);line-height:1.5;}
+.ap-close{position:absolute;top:14px;right:16px;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:14px;border:none;}
+.ap-close:hover{background:rgba(255,255,255,.25);}
+.ap-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 20px 20px;}
+.ap-tile{border:1.5px solid var(--border);border-radius:10px;padding:16px 14px;cursor:pointer;display:flex;flex-direction:column;gap:8px;}
+.ap-tile:hover{border-color:var(--blue);background:var(--blue-l);}
+.ap-tile-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.ap-tile-title{font-size:13px;font-weight:700;color:var(--text);}
+.ap-tile-desc{font-size:11.5px;color:var(--text-m);line-height:1.5;}
+.ap-tile-tags{display:flex;gap:4px;flex-wrap:wrap;}
+.aptag{font-size:9.5px;padding:1px 6px;border-radius:3px;background:var(--bg);border:1px solid var(--border);color:var(--text-m);}
+.ap-foot{background:var(--green-l);border-top:1px solid var(--green-m);padding:8px 20px;font-size:11.5px;color:var(--green);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.anim{animation:fadeUp .3s ease both;}
+.ss-bars{display:flex;flex-direction:column;gap:4px;margin:8px 0 4px;}
+.ss-bar-row{display:flex;align-items:center;gap:8px;}
+.ss-bar-name{font-size:11px;color:var(--text-m);width:88px;flex-shrink:0;}
+.ss-bar-track{flex:1;height:14px;background:var(--bg);border-radius:3px;overflow:hidden;}
+.ss-bar-fill{height:100%;border-radius:3px;}
+.ss-bar-val{font-size:11px;font-weight:500;width:56px;text-align:right;}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-logo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <rect x="11" y="1.5" width="2" height="5.5" fill="#E86427" rx="1"/>
+      <rect x="11" y="17" width="2" height="5.5" fill="#E86427" rx="1" opacity=".4"/>
+      <rect x="1.5" y="11" width="5.5" height="2" fill="#E86427" rx="1"/>
+      <rect x="17" y="11" width="5.5" height="2" fill="#E86427" rx="1" opacity=".4"/>
+      <rect x="4.2" y="3.5" width="2" height="5.5" fill="#E86427" rx="1" transform="rotate(45 4.2 3.5)"/>
+      <rect x="15.5" y="14.8" width="2" height="5.5" fill="#E86427" rx="1" transform="rotate(45 15.5 14.8)" opacity=".4"/>
+      <rect x="3.5" y="15.5" width="5.5" height="2" fill="#E86427" rx="1" transform="rotate(45 3.5 15.5)" opacity=".4"/>
+      <rect x="14.8" y="4.2" width="5.5" height="2" fill="#E86427" rx="1" transform="rotate(45 14.8 4.2)"/>
+    </svg>
+    Tableau Cloud
+  </div>
+  <div class="nav-links">
+    <span class="nav-link">Home</span>
+    <span class="nav-link">Explore</span>
+    <span class="nav-link active">Agent</span>
+    <span class="nav-link">Recents</span>
+  </div>
+  <div class="nav-r">
+    <div class="nav-av">V</div>
+  </div>
+</nav>
+<div class="subnav">
+  <span class="snav-tab active">Agent workspace</span>
+  <span class="snav-tab">Explore</span>
+  <span class="snav-sp"></span>
+  <div class="mode-pill" id="analyst-badge">&#9675; Analyst mode <span style="width:6px;height:6px;border-radius:50%;background:#1E7E5E;display:inline-block;margin-left:2px"></span></div>
+  <div class="trust-pill">&#9679; Vik&#39;s token &middot; RLS enforced</div>
+</div>
+<div class="layout">
+  <div class="sidebar" id="sidebar">
+    <div class="sb-hdr"><span class="sb-hdr-t">Projects</span><span style="font-size:18px;cursor:pointer;color:var(--text-l)">+</span></div>
+    <div class="sb-sec">Active</div>
+    <div class="proj active" data-proj="qbr">
+      <div class="proj-name">&#128193; QBR prep &middot; Q3</div>
+      <div class="proj-meta" id="qbr-meta">Updated 2h ago &middot; 6 artifacts</div>
+      <div class="proj-tags"><span class="ptag">Forecast</span><span class="ptag">Attainment</span><span class="ptag">Slack&times;2</span></div>
+    </div>
+    <div class="proj" data-proj="emea">
+      <div class="proj-name">&#128193; EMEA deep dive</div>
+      <div class="proj-meta">Yesterday &middot; 3 artifacts</div>
+      <div class="proj-tags"><span class="ptag">Pipeline</span><span class="ptag">SF write</span></div>
+    </div>
+    <div class="proj" data-proj="pipe">
+      <div class="proj-name">&#128193; Pipeline review</div>
+      <div class="proj-meta">3 days ago &middot; 2 artifacts</div>
+      <div class="proj-tags"><span class="ptag">Pulse</span></div>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-sec">Recent sessions</div>
+    <div class="proj"><div class="proj-name" style="font-weight:400;color:var(--text-m)">Unsaved &middot; May 12</div><div class="proj-meta">Forecast &middot; 2 turns</div></div>
+    <div class="proj"><div class="proj-name" style="font-weight:400;color:var(--text-m)">Unsaved &middot; May 10</div><div class="proj-meta">Attainment &middot; 4 turns</div></div>
+  </div>
+  <div class="canvas" id="canvas">
+    <div class="home-state" id="home-state">
+      <div class="home-greet">Good morning, Vik &#128075;</div>
+      <div class="home-sub">Your QBR is in 3 days. You have 12 dashboards, 4 Pulse metrics, and an active project. What do you want to tackle?</div>
+      <div class="search-wrap">
+        <div class="search-box">
+          <span style="color:var(--text-l);font-size:16px">&#128269;</span>
+          <input id="home-input" type="text" placeholder="Ask anything &mdash; pull a dashboard, analyze data, find content&hellip;" autocomplete="off" />
+          <button class="search-send" id="home-send">&#8593;</button>
+        </div>
+      </div>
+      <div class="cap-grid" id="cap-grid">
+        <div class="cap-btn" data-cmd="forecast">&#128202; Analyze my dashboard</div>
+        <div class="cap-btn" data-cmd="discover">&#128269; Find content</div>
+        <div class="cap-btn" data-cmd="slack">&#128172; Share &amp; collaborate</div>
+        <div class="cap-btn" data-cmd="deck">&#128196; Create slides</div>
+        <div class="cap-btn" data-cmd="pulse">&#9889; Pulse metrics</div>
+        <div class="cap-btn" data-cmd="sf">&#9729; Update Salesforce</div>
+      </div>
+    </div>
+    <div class="thread-state" id="thread-state">
+      <div class="ctx-bar">
+        <span style="font-size:10px;color:var(--text-l)">Session:</span>
+        <span class="ctx-chip proj" id="ctx-proj">&#128193; QBR prep &middot; Q3</span>
+        <span class="ctx-chip" id="ctx-extra" style="display:none"></span>
+      </div>
+      <div class="thread" id="thread"></div>
+      <div class="input-area">
+        <div class="input-wrap">
+          <input id="thread-input" type="text" placeholder="Ask a follow-up or try a capability&hellip;" autocomplete="off" />
+          <button class="isend" id="thread-send">&#8593;</button>
+        </div>
+        <div class="cap-row" id="thread-caps">
+          <div class="cap-t" data-cmd="forecast">&#128202; Analyze</div>
+          <div class="cap-t" data-cmd="discover">&#128269; Find</div>
+          <div class="cap-t" data-cmd="slack">&#128172; Share</div>
+          <div class="cap-t" data-cmd="deck">&#128196; Slides</div>
+          <div class="cap-t" data-cmd="sf">&#9729; Salesforce</div>
+          <div class="cap-t" data-cmd="superstore">&#128452; Connect data</div>
+          <div class="cap-t" data-cmd="analyst">&#9675; Analyst mode</div>
+        </div>
+      </div>
+      <div class="prog-bar">
+        <span style="font-size:10px;color:var(--text-l)">Workflow:</span>
+        <div id="pdots" style="display:flex;gap:4px;"></div>
+        <span id="pstep" style="font-size:10px;color:var(--text-m);font-weight:500;margin-left:4px"></span>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+const STEPS=['Login','Discover','Forecast','Analyze','APAC','Slack','Salesforce','Deck','Done'];
+let step=0, busy=false, activeProj='qbr', ssMode=false;
+const sessions={qbr:{html:'',step:0},ss:{html:'',step:0}};
+
+function el(id){return document.getElementById(id);}
+function T(){return el('thread');}
+function scroll(){setTimeout(()=>{T().scrollTop=T().scrollHeight;},50);}
+
+function initDots(){
+  const c=el('pdots');c.innerHTML='';
+  STEPS.forEach((_,i)=>{const d=document.createElement('div');d.className='pdot'+(i===0?' active':'');d.title=STEPS[i];c.appendChild(d);});
+  el('pstep').textContent=STEPS[0];
+}
+function setStep(n){
+  step=n;
+  document.querySelectorAll('.pdot').forEach((d,i)=>{d.className='pdot'+(i<n?' done':i===n?' active':'');});
+  el('pstep').textContent=STEPS[Math.min(n,STEPS.length-1)];
+}
+function setCtx(txt){const e=el('ctx-extra');if(txt){e.style.display='';e.textContent=txt;}else e.style.display='none';}
+
+function showThread(){
+  el('home-state').style.display='none';
+  el('thread-state').classList.add('visible');
+  initDots();
+}
+
+function addUser(txt){
+  const r=document.createElement('div');r.className='msg-row user';
+  r.innerHTML='<div class="bubble user">'+txt+'</div>';
+  T().appendChild(r);scroll();
+}
+function addAgent(html){
+  const r=document.createElement('div');r.className='msg-row';
+  r.innerHTML='<div class="av">T</div><div class="bubble agent">'+html+'</div>';
+  T().appendChild(r);scroll();
+}
+function addRich(html){
+  const w=document.createElement('div');w.className='rich anim';w.innerHTML=html;
+  T().appendChild(w);scroll();return w;
+}
+function typing(){
+  const r=document.createElement('div');r.className='msg-row';r.id='typing';
+  r.innerHTML='<div class="av" style="opacity:.4">T</div><div class="bubble agent"><div class="dots"><span></span><span></span><span></span></div></div>';
+  T().appendChild(r);scroll();
+}
+function rmT(){const r=el('typing');if(r)r.remove();}
+function lock(){busy=true;el('thread-send').disabled=true;}
+function unlock(){busy=false;el('thread-send').disabled=false;if(el('thread-input'))el('thread-input').focus();}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+
+function bars(data){return '<div class="cbars">'+data.map((h,i)=>'<div class="cbar" style="height:'+h+'%;background:'+(i>=8?'#D95F5F':i>=5?'#378ADD':'#85B7EB')+'"></div>').join('')+'</div><div class="clbls"><span>Jan</span><span>Mar</span><span>May</span><span>Jul</span><span>Sep</span><span>Nov</span></div>';}
+
+function saveSession(key){sessions[key].html=T().innerHTML;sessions[key].step=step;}
+function switchProj(key){
+  if(key===activeProj)return;
+  saveSession(activeProj);
+  activeProj=key;
+  document.querySelectorAll('.proj').forEach(p=>p.classList.remove('active'));
+  const pid=key==='qbr'?'proj-qbr-el':key==='ss'?'proj-ss-el':null;
+  if(pid&&el(pid))el(pid).classList.add('active');
+  else document.querySelectorAll('.proj').forEach(p=>{if(p.dataset.proj===key||p.id==='proj-'+key+'-el')p.classList.add('active');});
+  T().innerHTML=sessions[key].html||'';;
+  step=sessions[key].step||0;
+  ssMode=(key==='ss');
+  el('ctx-proj').innerHTML='&#128193; '+(key==='ss'?'Superstore analysis':'QBR prep &middot; Q3');
+  setCtx('');
+  if(el('pdots'))initDots(),setStep(step);
+  scroll();
+  if(key==='ss'&&!sessions.ss.html)startSS();
+}
+
+function routeCmd(cmd){
+  const map={forecast:2,discover:1,slack:5,deck:7,sf:6,superstore:9,pulse:2,analyst:'analyst'};
+  const s=map[cmd];
+  if(s==='analyst'){showAnalystPanel();return;}
+  if(s)run(s);else run(2);
+}
+
+function homeGo(){
+  if(busy)return;
+  const v=el('home-input').value.trim();
+  if(!v)return;
+  el('home-input').value='';
+  showThread();
+  addUser(v);
+  const t=v.toLowerCase();
+  if(t.includes('access')||t.includes('content')||t.includes('find')||t.includes('what do'))run(1);
+  else if(t.includes('superstore')||t.includes('connect')||t.includes('datasource'))run(9);
+  else if(t.includes('slack')||t.includes('share'))run(5);
+  else if(t.includes('deck')||t.includes('slide'))run(7);
+  else if(t.includes('salesforce'))run(6);
+  else run(2);
+}
+
+function threadGo(){
+  if(busy)return;
+  const inp=el('thread-input');
+  const v=inp.value.trim();if(!v)return;
+  inp.value='';
+  addUser(v);
+  const t=v.toLowerCase();
+  if(ssMode){
+    if(t.includes('product')||t.includes('top')||t.includes('sales')||t.includes('most'))ssQ('products');
+    else if(t.includes('margin')||t.includes('category')||t.includes('furniture'))ssQ('margins');
+    else if(t.includes('los')||t.includes('negative')||t.includes('worst'))ssQ('losing');
+    else if(t.includes('region')||t.includes('west')||t.includes('south'))ssQ('regions');
+    else ssQ('products');
+    return;
+  }
+  if(t.includes('superstore')||(t.includes('connect')&&t.includes('data'))){run(9);return;}
+  if(t.includes('emea')||t.includes('analyz')||t.includes('insight')||(t.includes('yes')&&step>=2)){
+    run(step<2?2:Math.max(step+1,3));return;
+  }
+  if(t.includes('apac')&&step>=3){run(4);return;}
+  if(t.includes('slack')||t.includes('share')){run(5);return;}
+  if(t.includes('salesforce')){run(6);return;}
+  if(t.includes('deck')||t.includes('slide')){run(7);return;}
+  if(t.includes('export')||t.includes('done')||t.includes('wrap')){run(8);return;}
+  const yes=['yes','sure','go ahead','ok','do it','continue','next'];
+  if(yes.some(k=>t.includes(k))){run(Math.min(step+1,8));return;}
+  if(step<2){run(2);}else fallback(v);
+}
+
+function fallback(q){
+  lock();typing();
+  setTimeout(()=>{
+    rmT();
+    addAgent('Let me help — here&#39;s where we can go from here.');
+    addRich('<div class="sugg-row"><span class="sugg" data-run="2">Open forecast</span><span class="sugg" data-run="5">Share to Slack</span><span class="sugg" data-run="7">Build deck</span><span class="sugg" data-run="6">Update Salesforce</span></div>');
+    unlock();
+  },700);
+}
+
+async function run(s){
+  if(busy)return;
+  lock();setStep(s);
+  typing();await delay(800+Math.random()*300);rmT();
+  const fns={1:r1,2:r2,3:r3,4:r4,5:r5,6:r6,7:r7,8:r8,9:r9};
+  if(fns[s])await fns[s]();
+  else fallback('');
+  unlock();
+}
+
+async function r1(){
+  addAgent('You have access to <strong>12 items</strong> across 4 projects. Two are restricted — I&#39;ve already pinged the owners.');
+  addRich('<div class="card"><div class="card-hdr"><span class="card-title">&#128193; Your content (12 items)</span></div><div class="card-body"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">'
+    +[['&#128202;','Forecast','Sales &middot; 2h ago',false],['&#128202;','Attainment','Sales &middot; Today',false],['&#128202;','Pipeline','Sales &middot; 1d ago',false],['&#9889;','Pulse &middot; 4 metrics','Subscribed',false],['&#128274;','Revenue ops','No access',true],['&#128274;','Exec summary','No access',true]]
+    .map(([ic,nm,mt,lk])=>'<div class="conn-item' +(lk?' style="opacity:.5;pointer-events:none"':'')+'"'+(!lk?' data-run="2"':'')+ '><div class="conn-icon">'+ic+'</div><div class="conn-name">'+nm+'</div><div class="conn-type">'+mt+'</div></div>').join('')
+    +'</div><div style="background:var(--amber-l);border:1px solid var(--amber-m);border-radius:6px;padding:8px 10px;font-size:11.5px;color:var(--amber);margin-top:8px">&#9203; Access requested for <strong>Revenue ops</strong> and <strong>Exec summary</strong> &mdash; owners notified.</div></div></div>'
+    +'<div class="sugg-row"><span class="sugg" data-run="2">Open forecast &#8599;</span><span class="sugg" data-run="9">Connect a datasource</span></div>');
+}
+
+async function r2(){
+  setCtx('&#128202; Forecast &middot; all regions');
+  addAgent('Here&#39;s your Forecast dashboard &mdash; live via Embed API under your session token. Want me to analyze the data?');
+  addRich('<div class="card"><div class="card-hdr"><span class="card-title">&#128202; Forecast dashboard &mdash; Q3 FY25</span><div style="display:flex;gap:4px"><span class="btn">Filter</span><span class="btn">Expand</span><span class="btn">Export</span></div></div><div class="card-body">'
+    +'<div class="mets">'
+    +[['Total forecast','$42.1M','&#9660; 8% vs target',true],['Attainment','74%','&#9660; vs 82% LY',true],['Pipeline','$118M','&#9650; 12% MoM',false],['At-risk deals','23','&#9650; 6 this week',true]]
+    .map(([l,v,d,dn])=>'<div class="met"><div class="met-l">'+l+'</div><div class="met-v">'+v+'</div><div class="met-d '+(dn?'dn':'up')+ '">'+d+'</div></div>').join('')
+    +'</div>'
+    +bars([52,60,56,66,63,74,78,80,70,58,53,56])
+    +'<div class="fpills"><span class="fpill">All regions</span><span class="fpill">Q3 FY25</span></div></div></div>'
+    +'<div class="tsig">&#128737; Embed API &middot; Vik&#39;s token &middot; RLS active</div>'
+    +'<div class="sugg-row"><span class="sugg" data-run="3">Analyze EMEA &#8599;</span><span class="sugg" data-run="3">Key risks?</span><span class="sugg" data-run="3">vs last quarter</span></div>');
+  await delay(1200);
+  typing();await delay(600);rmT();
+  addAgent('Attainment at 74% with 6 weeks left in Q3, and at-risk deals up 6 this week. Want me to dig in &mdash; especially EMEA?');
+  addRich('<div class="sugg-row"><span class="sugg" data-run="3">Yes, analyze EMEA &#8599;</span><span class="sugg" data-run="3">Show at-risk deals</span></div>');
+}
+
+async function r3(){
+  setCtx('&#128202; Forecast &middot; EMEA &middot; VizQL');
+  addAgent('Applied EMEA filter via Embed API. Queried via VizQL Data Service. Here&#39;s the full picture &mdash; and what I think you should do about it.');
+  addRich('<div class="card"><div class="card-hdr"><span class="card-title">&#128202; Forecast &mdash; EMEA &middot; Q3 FY25</span></div><div class="card-body">'
+    +'<div class="mets">'
+    +[['EMEA forecast','<span style="color:var(--red)">$8.2M</span>','&#9660; 18% vs $10M target',true],['At-risk deals','14','&#9650; 4 this week',true],['Pipeline cover','<span style="color:var(--green)">3.2x</span>','Healthy',false],['Conversion','22%','&#9660; from 31% LY',true]]
+    .map(([l,v,d,dn])=>'<div class="met"><div class="met-l">'+l+'</div><div class="met-v">'+v+'</div><div class="met-d '+(dn?'dn':'up')+'">'+d+'</div></div>').join('')
+    +'</div>'
+    +bars([44,49,46,54,50,58,56,52,42,38,36,40])
+    +'<div class="fpills"><span class="fpill">EMEA</span><span class="fpill">Q3 FY25</span></div></div></div>'
+    +'<div class="card"><div class="card-body"><div class="pulse-badge">&#9889; Pulse enhanced reasoning &middot; VizQL Data Service</div>'
+    +'<p style="font-size:12.5px;line-height:1.6;margin-bottom:9px">EMEA is in trouble &mdash; but not for the reason you might think. The pipeline is <em>fine</em>. 3.2x coverage means the deals are there. What&#39;s broken is conversion: down 9 points year-over-year. This is a <strong>closing problem, not a sourcing problem</strong>. UK and Germany driving 67% of the shortfall. France is on track.</p>'
+    +'<div class="insight-list">'
+    +[['var(--red)','<strong>Root cause:</strong> Conversion dropped 31% &rarr; 22% YoY. Three UK enterprise deals (~$380K avg) stalled at 47+ days &mdash; not lost, just stuck.'],['var(--red)','<strong>Germany:</strong> 4 new at-risk deals this week. Budget freeze pattern &mdash; same as Q4 last year. Likely recoverable in Q4.'],['var(--amber)','<strong>France:</strong> on track at $2.1M, 29% conversion. Bright spot &mdash; worth understanding what&#39;s different.'],['var(--green)','<strong>Pipeline signal:</strong> top-of-funnel is healthy. This is entirely a mid-to-late stage conversion issue.']]
+    .map(([c,t])=>'<div class="insight-item"><div class="idot" style="background:'+c+'"></div>'+t+'</div>').join('')
+    +'</div></div></div>'
+    +'<div class="role-card"><div class="role-badge">&#128100; 3 things to consider &middot; VP of Sales</div><div class="actions-list">'
+    +[['var(--red)','Call your UK team lead today','Three stalled deals ~$1.1M need executive air cover or a reset before quarter end.','urg-now','This week'],['var(--amber)','Reforecast Germany to Q4 &amp; update Salesforce','4 at-risk deals match last year&#39;s budget freeze. Setting expectations now protects your Q3 call.','urg-week','Before QBR'],['var(--blue)','Ask France what they&#39;re doing differently','29% conversion vs 22% avg &mdash; there&#39;s a playbook worth capturing before your QBR.','urg-strat','Strategic']]
+    .map(([c,ti,de,uc,ul])=>'<div class="act-item"><div class="act-num" style="background:'+c+'">&bull;</div><div><div class="act-title">'+ti+'</div><div class="act-desc">'+de+'</div><span class="act-urg '+uc+'">'+ul+'</span></div></div>').join('')
+    +'</div></div>'
+    +'<div class="tsig">&#128737; Queried as Vik &middot; VizQL Data Service &middot; RLS enforced &middot; Pulse reasoning</div>'
+    +'<div class="act-strip"><span class="act-btn slack" data-run="5">&#128172; Share to Slack</span><span class="act-btn sf" data-run="6">&#9729; Update Salesforce</span><span class="act-btn" data-run="7">&#128196; Add to deck</span></div>'
+    +'<div style="margin-top:8px"><div style="font-size:11.5px;color:var(--text-m);margin-bottom:5px">Want to go deeper?</div><div class="sugg-row"><span class="sugg" data-run="4">APAC comparison</span><span class="sugg" data-run="5">Share to Slack</span><span class="sugg" data-run="6">Update Salesforce</span><span class="sugg" data-run="7">Build deck</span></div></div>');
+  await delay(1500);
+  addRich('<div class="nudge-card"><div class="nudge-hdr"><span>&#128065; I noticed something while analyzing EMEA</span><span class="dismiss-nudge" style="cursor:pointer;opacity:.7">Dismiss &times;</span></div><div class="nudge-body">APAC pipeline dropped <strong>22% this week</strong> in the Pipeline dashboard you have access to. Given the EMEA conversion pattern, this might be a broader macro signal worth flagging at your QBR.<div class="tsig" style="margin-top:6px">&#128737; You have access to this data &middot; verified before surfacing</div><div style="display:flex;gap:5px;margin-top:8px"><span class="btn btn-p" data-run="4">Pull up APAC &#8599;</span><span class="dismiss-nudge btn" style="cursor:pointer">Not now</span></div></div></div>');
+  setStep(4);
+}
+
+async function r4(){
+  setCtx('&#128202; Pipeline &middot; APAC &middot; verified');
+  addAgent('Here&#39;s APAC. The drop is real &mdash; but it&#39;s a timing problem, not a conversion problem.');
+  addRich('<div class="card"><div class="card-hdr"><span class="card-title">&#128202; Pipeline &mdash; APAC &middot; Q3 FY25</span></div><div class="card-body"><div class="mets" style="grid-template-columns:repeat(3,1fr)"><div class="met"><div class="met-l">APAC pipeline</div><div class="met-v">$34.2M</div><div class="met-d dn">&#9660; 22% WoW</div></div><div class="met"><div class="met-l">ANZ drop</div><div class="met-v">&minus;$5.1M</div><div class="met-d dn">3 deals slipped</div></div><div class="met"><div class="met-l">India drop</div><div class="met-v">&minus;$2.8M</div><div class="met-d dn">Budget freeze</div></div></div></div></div>'
+    +'<div class="card"><div class="card-body"><div class="pulse-badge">&#9889; Pulse enhanced reasoning</div><p style="font-size:12.5px;line-height:1.6">APAC and EMEA both show mid-funnel weakness in Q3 &mdash; but for different reasons. EMEA is a <strong>conversion problem</strong>. APAC is a <strong>timing problem</strong>. ANZ slippage is end-of-quarter scheduling, historically recoverable. India is a budget freeze cycle, same as Germany. The macro signal for your QBR: Q3 is a tough close environment globally, but pipeline is building, not shrinking.</p></div></div>'
+    +'<div class="sugg-row"><span class="sugg" data-run="5">Share EMEA to Slack &#8599;</span><span class="sugg" data-run="7">Add to deck</span></div>');
+}
+
+async function r5(){
+  addAgent('Sent to <strong>#sales-leadership</strong> via Slack MCP. Static snapshot via REST API &mdash; no live data leaves Tableau.');
+  addRich('<div class="slack-card"><div class="slack-hdr">&#128172; #sales-leadership &middot; sent by Vik via Tableau Agent</div><div class="slack-body"><div class="slack-ch">Today &middot; 9:43 AM &middot; acting as Vik</div>EMEA update for QBR: Q3 forecast $8.2M &mdash; 18% below target. Root cause is conversion (22% vs 31% LY), not pipeline. UK has 3 stalled deals worth ~$1.1M. Germany slipping to Q4. France on track. Dashboard filtered to EMEA attached.<div class="slack-img">&#128202; Forecast &middot; EMEA &middot; static snapshot &middot; REST API export</div></div></div>'
+    +'<div class="tsig">&#128737; Image only &middot; no live data &middot; user-initiated &middot; logged in audit trail</div>'
+    +'<div class="sugg-row"><span class="sugg" data-run="6">Update Salesforce &#8599;</span><span class="sugg" data-run="7">Build deck</span></div>');
+  el('qbr-meta').textContent='This session &middot; 7 artifacts';
+}
+
+async function r6(){
+  addAgent('Updated via Salesforce MCP &mdash; record written, change logged.');
+  addRich('<div class="sf-card"><div class="sf-hdr">&#9729; Salesforce &middot; Forecast record updated</div><div class="sf-body">'
+    +[['Region','EMEA',''],['Period','Q3 FY25',''],['Previous forecast','$10.1M','sf-was'],['Updated forecast','$8.2M','sf-chg'],['Change reason','UK deal slippage + Germany budget freeze',''],['Updated by','Vik &middot; Tableau Agent &middot; Salesforce MCP','']]
+    .map(([l,v,c])=>'<div class="sf-row"><span class="sf-l">'+l+'</span><span class="sf-v '+c+'">'+v+'</span></div>').join('')
+    +'</div></div>'
+    +'<div class="tsig">&#128737; User-confirmed write &middot; Salesforce MCP &middot; audit logged</div>'
+    +'<div class="sugg-row"><span class="sugg" data-run="7">Build QBR deck &#8599;</span></div>');
+  el('qbr-meta').textContent='This session &middot; 8 artifacts';
+}
+
+async function r7(){
+  setCtx('&#128196; Deck mode &middot; 3 views');
+  addAgent('Exported 3 views via REST API. Your QBR deck is ready &mdash; add more slides or export.');
+  addRich('<div class="deck-card"><div class="card-hdr"><span class="card-title">&#128196; QBR deck &middot; Q3 FY25 <span style="font-weight:400;color:var(--text-l)">(3 slides)</span></span><span class="btn btn-p" data-run="8">Export PPTX &#8599;</span></div><div class="deck-strip">'
+    +[['Forecast','EMEA filter'],['Attainment','Q3'],['Pipeline','APAC']]
+    .map(([nm,lb])=>'<div class="dthumb"><div class="dthumb-img">&#128202; '+nm+'</div><div class="dthumb-lbl">'+nm+' &middot; '+lb+'</div></div>').join('')
+    +'<div class="dthumb-add">&#43;<br>Add view</div></div></div>'
+    +'<div class="act-strip"><span class="act-btn" data-run="8">&#128196; Export PPTX</span><span class="act-btn slack">&#128172; Share to Slack</span><span class="act-btn" style="border-color:#34A853;color:#34A853">&#128154; Google Slides</span></div>'
+    +'<div class="tsig">&#128737; All exports via Tableau REST API &middot; Vik&#39;s token &middot; images only</div>');
+  el('qbr-meta').textContent='This session &middot; 9 artifacts';
+}
+
+async function r8(){
+  addAgent('That&#39;s a wrap, Vik. Everything&#39;s saved to QBR prep &middot; Q3. You&#39;re in good shape for Thursday.');
+  addRich('<div class="card"><div class="card-body"><div class="pulse-badge">&#9989; Session summary &middot; saved to QBR prep &middot; Q3</div><div class="insight-list">'
+    +[['#1473E6','Analyzed EMEA forecast &mdash; $8.2M, 18% below target. Closing problem, not sourcing. UK and Germany the culprits.'],['#E86427','Surfaced APAC pipeline drop (&minus;22% WoW) &mdash; macro signal for QBR narrative.'],['#4A154B','Shared EMEA snapshot to #sales-leadership &mdash; static image, logged.'],['#0070D2','Updated Salesforce &mdash; EMEA Q3 from $10.1M &rarr; $8.2M with change reason.'],['#1E7E5E','Built QBR deck &mdash; 3 slides exported. Ready for Thursday.']]
+    .map(([c,t])=>'<div class="insight-item"><div class="idot" style="background:'+c+'"></div>'+t+'</div>').join('')
+    +'</div></div></div>'
+    +'<div class="role-card"><div class="role-badge">&#128100; Still open before your QBR</div><div class="actions-list">'
+    +[['var(--red)','Call your UK team lead today','$1.1M stalled in late stage. Executive air cover needed.','urg-now','This week'],['var(--amber)','Confirm Germany moves to Q4','Already in Salesforce &mdash; align your VP chain before Thursday.','urg-week','Before QBR'],['var(--blue)','Talk to France','29% conversion vs 22% avg. Playbook worth sharing at QBR.','urg-strat','Strategic']]
+    .map(([c,ti,de,uc,ul])=>'<div class="act-item"><div class="act-num" style="background:'+c+'">&bull;</div><div><div class="act-title">'+ti+'</div><div class="act-desc">'+de+'</div><span class="act-urg '+uc+'">'+ul+'</span></div></div>').join('')
+    +'</div></div>'
+    +'<div class="sugg-row"><span class="reset-home sugg">Start new session</span><span class="sugg" data-run="1">Explore more</span></div>');
+  el('qbr-meta').textContent='Just now &middot; 10 artifacts saved';
+}
+
+async function r9(){
+  saveSession(activeProj);
+  addAgent('That&#39;s a different context from your current <strong>QBR prep</strong> session. Let me open a fresh project so both threads stay clean.');
+  addRich('<div class="new-proj-card"><div class="new-proj-hdr"><span class="new-proj-title">Start new project &middot; Superstore analysis</span><span style="font-size:10px;margin-left:auto;color:var(--green)">QBR prep stays intact</span></div><div class="card-body"><p style="font-size:12px;color:var(--text-m);line-height:1.55;margin-bottom:9px">Your QBR prep project stays saved in the sidebar. The Superstore analysis opens as a new session with its own thread and context.</p><div class="rarts"><span class="rart">&#128452; Superstore datasource</span><span class="rart">&#128202; Products &middot; categories</span><span class="rart">&#127758; Regional breakdown</span></div><div style="display:flex;gap:6px;margin-top:10px"><span class="btn btn-p open-ss-proj">Open new project &#8599;</span><span class="btn">Stay in QBR prep</span></div></div></div>');
+}
+
+async function startSS(){
+  lock();
+  addAgent('Fresh session. Verifying access to <strong>Superstore</strong> datasource via VizQL Data Service&hellip;');
+  addRich('<div class="card"><div class="card-body">'
+    +['Verifying access to Superstore datasource&hellip;','Connecting via VizQL Data Service&hellip;','Querying products, categories, margins&hellip;']
+    .map((t,i)=>'<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><div style="width:7px;height:7px;border-radius:50%;background:var(--amber-m);flex-shrink:0"></div><span style="font-size:12px;color:var(--text-m)">'+t+'</span></div>').join('')
+    +'</div></div>');
+  await delay(1600);
+  addRich('<div class="card"><div class="card-hdr"><span class="card-title">&#128452; Superstore &middot; connected &middot; 10,194 rows</span></div><div class="card-body"><div class="mets">'
+    +[['Total sales','$2.33M','&#9650; 21% YoY'],['Total profit','$292K','12.6% margin'],['Orders','5,111','800 customers'],['Categories','3','16 sub-categories']]
+    .map(([l,v,d])=>'<div class="met"><div class="met-l">'+l+'</div><div class="met-v">'+v+'</div><div class="met-d" style="color:var(--text-l)">'+d+'</div></div>').join('')
+    +'</div><div class="tsig">&#128737; Access verified &middot; Vik&#39;s token &middot; VizQL &middot; RLS enforced</div></div></div>');
+  await delay(500);
+  addAgent('You&#39;re in. I can see products, categories, regions, margins, and 4 years of order history. What do you want to know first?');
+  addRich('<div class="sugg-row"><span class="sugg" data-ss="products">Which products have the most sales? &#8599;</span><span class="sugg" data-ss="margins">Best category margins?</span><span class="sugg" data-ss="losing">Where are we losing money?</span><span class="sugg" data-ss="regions">How do regions compare?</span></div>');
+  unlock();
+}
+
+async function ssQ(type){
+  lock();
+  const labels={products:'Which products have the most sales?',margins:'Best category margins?',losing:'Where are we losing money?',regions:'How do regions compare?'};
+  addUser(labels[type]);
+  typing();await delay(900);rmT();
+  if(type==='products'){
+    addAgent('Technology leads on revenue but Furniture is quietly dragging the whole portfolio.');
+    addRich('<div class="card"><div class="card-hdr"><span class="card-title">&#128202; Sales by category</span></div><div class="card-body"><div class="mets" style="grid-template-columns:repeat(3,1fr)"><div class="met"><div class="met-l">Technology</div><div class="met-v">$839.9K</div><div class="met-d up">17.4% margin &#10003;</div></div><div class="met"><div class="met-l">Furniture</div><div class="met-v">$754.7K</div><div class="met-d dn">2.6% margin &#9888;</div></div><div class="met"><div class="met-l">Office Supplies</div><div class="met-v">$731.9K</div><div class="met-d up">17.2% margin &#10003;</div></div></div>'
+      +'<div style="margin-top:10px">'
+      +[['Chairs',335,88,'#378ADD'],['Phones',331,87,'#378ADD'],['Storage',224,59,'#85B7EB'],['Tables',208,55,'#D95F5F'],['Binders',207,54,'#85B7EB'],['Copiers',150,40,'#2D9D78']]
+      .map(([n,v,p,c])=>'<div class="ss-bar-row" style="margin-bottom:5px"><span class="ss-bar-name">'+n+'</span><div class="ss-bar-track"><div class="ss-bar-fill" style="width:'+p+'%;background:'+c+'"></div></div><span class="ss-bar-val">$'+v+'K</span></div>').join('')
+      +'</div></div></div>'
+      +'<div class="card"><div class="card-body"><div class="pulse-badge">&#9889; Pulse enhanced reasoning &middot; VizQL</div>'
+      +'<p style="font-size:12.5px;line-height:1.6;margin-bottom:8px">Technology is running this store &mdash; but here&#39;s what&#39;s hiding in plain sight: <strong>Furniture is your second-biggest category at $754K and makes almost nothing.</strong> 2.6% margin means you&#39;re moving $754K of product to keep $19.7K. Office Supplies does nearly the same revenue for $126K profit. The Canon copier alone &mdash; one SKU &mdash; made $25.2K profit at 41% margin. More than your entire Furniture category.</p>'
+      +'<div class="insight-list">'
+      +[['var(--red)','<strong>Furniture margin crisis:</strong> Tables sub-category is the main drag. $208K in sales, likely negative margin on several SKUs.'],['var(--green)','<strong>Technology is your engine:</strong> Canon copier at 41% margin. Copiers sub-category is underweight at $150K &mdash; room to grow.'],['var(--amber)','<strong>Growth is real:</strong> $494K in 2023 &rarr; $745K in 2026. 51% over 3 years.']]
+      .map(([c,t])=>'<div class="insight-item"><div class="idot" style="background:'+c+'"></div>'+t+'</div>').join('')
+      +'</div></div></div>'
+      +'<div class="role-card"><div class="role-badge">&#128100; 3 things to consider</div><div class="actions-list">'
+      +[['var(--red)','Audit Furniture &mdash; especially Tables','2.6% margin on $754K is a strategic problem. Find margin-negative SKUs and reprice or discontinue.','urg-now','High priority'],['var(--amber)','Push Technology Copiers to Corporate','41% margin on Canon copier. Corporate runs 13.2% margin. Highest-leverage move.','urg-week','Growth lever'],['var(--blue)','Investigate the South region gap','West $739K vs South $391K on the same product mix. Coverage, pricing, or customer mix problem?','urg-strat','Strategic']]
+      .map(([c,ti,de,uc,ul])=>'<div class="act-item"><div class="act-num" style="background:'+c+'">&bull;</div><div><div class="act-title">'+ti+'</div><div class="act-desc">'+de+'</div><span class="act-urg '+uc+'">'+ul+'</span></div></div>').join('')
+      +'</div></div>'
+      +'<div class="tsig">&#128737; Queried as Vik &middot; VizQL &middot; RLS enforced &middot; Pulse reasoning</div>'
+      +'<div class="sugg-row"><span class="sugg" data-ss="losing">Loss-making products</span><span class="sugg" data-ss="margins">Category margins</span><span class="sugg" data-ss="regions">Region comparison</span><span class="sugg switch-to-qbr">Back to QBR prep &#8599;</span></div>');
+  } else if(type==='losing'){
+    addAgent('There are products actively destroying value. Here&#39;s exactly where.');
+    addRich('<div class="card"><div class="card-hdr"><span class="card-title">&#9888; Loss-making products &middot; bottom 5</span></div><div class="card-body">'
+      +[['Cubify CubeX 3D Printer Double Head','Technology',-8880],['Lexmark MX611dhe Laser Printer','Technology',-4590],['Cubify CubeX 3D Printer Triple Head','Technology',-3840],['Chromcraft Bull-Nose Conference Table','Furniture',-2876],['Bush Advantage Racetrack Conf. Table','Furniture',-1934]]
+      .map(([n,c,p],i)=>'<div style="display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:'+(i===4?'none':'1px solid var(--border)')+'"><div style="width:20px;height:20px;border-radius:50%;background:var(--red-l);color:var(--red);font-size:10px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0">&minus;</div><div style="flex:1;min-width:0"><div style="font-size:11.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+n+'</div><div style="font-size:10px;color:var(--text-l)">'+c+'</div></div><div style="font-size:12px;font-weight:500;color:var(--red)">$'+p.toLocaleString()+'</div></div>').join('')
+      +'</div></div>'
+      +'<div class="sugg-row"><span class="sugg" data-ss="products">Full breakdown &#8599;</span><span class="sugg" data-ss="margins">Category margins</span></div>');
+  } else if(type==='margins'){
+    addAgent('The category margin story is stark. One category is carrying the others.');
+    addRich('<div class="card"><div class="card-hdr"><span class="card-title">&#128202; Profit margin by category</span></div><div class="card-body">'
+      +[['Technology',17.4,'#378ADD',839893,146543],['Office Supplies',17.2,'#2D9D78',731893,126023],['Furniture',2.6,'#D95F5F',754748,19730]]
+      .map(r=>'<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:500">'+r[0]+'</span><span style="font-size:12px;font-weight:600;color:'+r[2]+'">'+r[1]+'%</span></div><div style="height:16px;background:var(--bg);border-radius:3px;overflow:hidden;margin-bottom:3px"><div style="width:'+r[1]*4+'%;height:100%;background:'+r[2]+';border-radius:3px"></div></div><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-l)"><span>$'+Math.round(r[3]/1000)+'K sales</span><span>$'+Math.round(r[4]/1000)+'K profit</span></div></div>').join('')
+      +'</div></div>'
+      +'<div class="sugg-row"><span class="sugg" data-ss="products">Top products &#8599;</span><span class="sugg" data-ss="losing">Loss-makers</span></div>');
+  } else {
+    addAgent('West is your clear leader but the South gap is the real story.');
+    addRich('<div class="card"><div class="card-hdr"><span class="card-title">&#127758; Sales by region</span></div><div class="card-body"><div class="mets">'
+      +[['West','$739.8K','32%'],['East','$691.8K','30%'],['Central','$503.2K','22%'],['South','$391.7K','17%']]
+      .map(([r,v,p])=>'<div class="met"><div class="met-l">'+r+'</div><div class="met-v" style="font-size:13px">'+v+'</div><div class="met-d" style="color:var(--text-l)">'+p+' of total</div></div>').join('')
+      +'</div></div></div>'
+      +'<div class="sugg-row"><span class="sugg" data-ss="products">Product breakdown &#8599;</span><span class="sugg" data-ss="margins">Category margins</span><span class="sugg switch-to-qbr">Back to QBR prep</span></div>');
+  }
+  unlock();
+}
+
+function showAnalystPanel(){
+  if(el('analyst-overlay'))return;
+  const ov=document.createElement('div');
+  ov.className='analyst-overlay';ov.id='analyst-overlay';
+  ov.innerHTML='<div class="analyst-panel"><div class="ap-hdr"><button class="ap-close" id="ap-close">&#10005;</button><div class="ap-title">&#9675; Analyst mode</div><div class="ap-sub">Connect to data, prep it for analysis, or build a custom agent for your team. All actions run under your token.</div></div><div class="ap-tiles">'
+    +[['&#128268;','#E8F3FE','Connect to data','Connect to any datasource &mdash; cloud DB, spreadsheet, or live connector.','Snowflake','Sheets','Salesforce','Excel','connect'],['&#128295;','var(--green-l)','Prep your data','Clean, join, and reshape with natural language. Agent builds the Prep flow.','Join','Clean','Filter','Reshape','prep'],['&#129302;','var(--bg)','Create an agent','Build a custom AI agent scoped to your data. Share with your team or Slack.','Monitor','Alert','Team Q&A','','agent']]
+    .map(([ic,bg,ti,de,t1,t2,t3,t4,cmd])=>'<div class="ap-tile" data-analyst="'+cmd+'"><div class="ap-tile-icon" style="background:'+bg+'">'+ic+'</div><div class="ap-tile-title">'+ti+'</div><div class="ap-tile-desc">'+de+'</div><div class="ap-tile-tags"><span class="aptag">'+t1+'</span><span class="aptag">'+t2+'</span><span class="aptag">'+t3+'</span>'+(t4?'<span class="aptag">'+t4+'</span>':'')+'</div></div>').join('')
+    +'</div><div class="ap-foot">&#128737; All actions run under Vik&#39;s access token &middot; permissions enforced &middot; audit logged</div></div>';
+  document.body.appendChild(ov);
+  el('ap-close').addEventListener('click',()=>ov.remove());
+  ov.addEventListener('click',(e)=>{if(e.target===ov)ov.remove();});
+  ov.querySelectorAll('.ap-tile').forEach(tile=>{
+    tile.addEventListener('click',()=>{ov.remove();runAnalystFlow(tile.dataset.analyst);});
+  });
+}
+
+async function runAnalystFlow(type){
+  showThread();lock();
+  const labels={connect:'Connect to a new datasource',prep:'Prep my data',agent:'Create a custom agent'};
+  addUser(labels[type]);
+  typing();await delay(800);rmT();
+  if(type==='connect'){
+    addAgent('Let&#39;s connect to a datasource. Pick one below or describe what you&#39;re working with.');
+    addRich('<div class="card"><div class="card-hdr"><span class="card-title">&#128268; Choose a connector</span></div><div class="connect-grid">'
+      +[['&#10052;','Snowflake','Cloud DB'],['&#128202;','Google Sheets','Spreadsheet'],['&#9729;','Salesforce','CRM'],['&#128217;','Excel / CSV','File upload'],['&#128311;','Azure SQL','Cloud DB'],['&#128024;','PostgreSQL','Database'],['&#128230;','Amazon S3','Storage'],['&#128308;','Oracle','Database']]
+      .map(([ic,nm,tp])=>'<div class="conn-item" data-connector="'+nm+'"><div class="conn-icon">'+ic+'</div><div class="conn-name">'+nm+'</div><div class="conn-type">'+tp+'</div></div>').join('')
+      +'</div></div>'
+      +'<div class="sugg-row"><span class="sugg" data-connector="Snowflake">Connect Snowflake &#8599;</span><span class="sugg" data-connector="Excel / CSV">Upload a file</span></div>');
+  } else if(type==='prep'){
+    addAgent('Tell me what you want to do with the data in plain English. I&#39;ll build the Tableau Prep flow and show you a preview before running anything.');
+    addRich('<div class="card"><div class="card-hdr"><span class="card-title">&#128295; Tableau Prep &middot; agent-guided</span></div><div class="prep-steps">'
+      +[['Join tables','Combine orders with customers, products, or regions'],['Clean &amp; deduplicate','Remove nulls, fix formats, drop duplicates'],['Filter &amp; reshape','Filter to last 12 months, pivot, aggregate'],['Add calculations','Margin %, YoY growth, rolling averages']]
+      .map(([ti,de],i)=>'<div class="prep-step"><div class="prep-num">'+(i+1)+'</div><div><strong>'+ti+'</strong> <span style="color:var(--text-l);font-size:11px">&middot; '+de+'</span></div></div>').join('')
+      +'</div></div>'
+      +'<div class="sugg-row"><span class="sugg">Join orders to customers &#8599;</span><span class="sugg">Clean nulls</span><span class="sugg">Add margin % calc</span></div>');
+  } else {
+    addAgent('Let&#39;s build a custom agent scoped to your data. It can monitor metrics, answer your team&#39;s questions, and push Slack alerts. About 2 minutes.');
+    addRich('<div class="card"><div class="card-hdr"><span class="card-title">&#129302; Agent builder &middot; step 1 of 2</span></div><div class="agent-builder"><div><div class="af-label">Agent name</div><input class="af-input" id="agent-name-inp" placeholder="e.g. EMEA Sales Monitor, Pipeline Tracker&hellip;" /></div><div><div class="af-label">What should this agent do?</div><div class="tchips" id="agent-chips"><span class="tchip" data-chip>Monitor a metric</span><span class="tchip" data-chip>Alert on change</span><span class="tchip sel" data-chip>Answer team Q&A</span><span class="tchip" data-chip>Daily briefing</span><span class="tchip" data-chip>Push to Slack</span></div></div><div class="agent-preview">This agent will answer questions about your data on behalf of your team &mdash; scoped to each user&#39;s individual access permissions.</div><span class="btn btn-p" id="agent-step2-btn">Configure scope &#8599;</span></div></div>');
+    document.querySelectorAll('[data-chip]').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('sel')));
+    el('agent-step2-btn').addEventListener('click',agentStep2);
+  }
+  unlock();
+}
+
+async function agentStep2(){
+  lock();
+  const name=(el('agent-name-inp')&&el('agent-name-inp').value)||'Sales Intelligence Agent';
+  typing();await delay(900);rmT();
+  addAgent('Almost there &mdash; set the scope and publish destinations.');
+  addRich('<div class="card"><div class="card-hdr"><span class="card-title">&#129302; Agent builder &middot; step 2 of 2 &middot; '+name+'</span></div><div class="agent-builder"><div><div class="af-label">Who can use this agent?</div><div class="tchips"><span class="tchip sel" data-chip>My team</span><span class="tchip" data-chip>Entire org</span><span class="tchip" data-chip>Just me</span></div></div><div><div class="af-label">Publish to</div><div class="tchips"><span class="tchip sel" data-chip>Tableau Cloud</span><span class="tchip sel" data-chip>Slack workspace</span><span class="tchip" data-chip>Embed in app</span></div></div><div class="agent-preview"><strong>'+name+'</strong> will be published to Tableau Cloud and your Slack workspace. Each user&#39;s queries run under their own access token.</div><span class="btn btn-p" id="agent-create-btn" data-name="'+name+'">Create agent &#8599;</span></div></div>');
+  document.querySelectorAll('[data-chip]').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('sel')));
+  const cb=el('agent-create-btn');
+  cb.addEventListener('click',()=>agentCreate(cb.dataset.name));
+  unlock();
+}
+
+async function agentCreate(name){
+  lock();typing();await delay(1100);rmT();
+  addAgent('<strong>'+name+'</strong> is live. Your team can start asking it questions right now.');
+  addRich('<div class="card"><div class="card-hdr"><span class="card-title" style="color:#6B46C1">&#129302; '+name+' &middot; live</span></div><div class="sf-body">'
+    +[['Agent name',name,''],['Datasource','Superstore &middot; 10,194 rows',''],['Scope','My team &middot; per-user token enforcement',''],['Published to','Tableau Cloud &middot; Slack workspace',''],['Created by','Vik &middot; May 13 2026','']]
+    .map(([l,v])=>'<div class="sf-row"><span class="sf-l">'+l+'</span><span class="sf-v">'+v+'</span></div>').join('')
+    +'</div></div>'
+    +'<div class="tsig">&#128737; Every query runs under the requesting user&#39;s token &middot; RLS enforced &middot; audit logged</div>'
+    +'<div class="sugg-row"><span class="sugg switch-to-qbr">Back to QBR prep &#8599;</span><span class="sugg" data-ss="products">Test the agent</span></div>');
+  unlock();
+}
+
+async function selectConnector(name){
+  lock();addUser('Connect to '+name);
+  typing();await delay(1000);rmT();
+  addAgent('Connected to <strong>'+name+'</strong>. I can see 12 schemas and 84 tables.');
+  addRich('<div class="card"><div class="card-hdr"><span class="card-title">&#128268; '+name+' &middot; connected</span></div><div class="card-body"><div style="font-size:12px;color:var(--text-m);line-height:1.6;margin-bottom:7px">Found <strong>12 schemas</strong>, <strong>84 tables</strong>. Recently updated: sales.orders, crm.accounts, finance.revenue</div><div class="tsig">&#128737; OAuth &middot; read-only &middot; your permissions apply</div></div></div>'
+    +'<div class="sugg-row"><span class="sugg" data-ss="products">Analyze data &#8599;</span><span class="sugg">Prep this data</span></div>');
+  unlock();
+}
+
+// ── EVENT DELEGATION ──
+document.addEventListener('click', function(e) {
+  const t = e.target;
+  // home caps
+  const cap = t.closest('.cap-btn');
+  if(cap && cap.dataset.cmd) {
+    const labels={forecast:'Open my forecast dashboard',discover:'What content do I have access to?',slack:'Share insight to Slack',deck:'Build my QBR deck',pulse:'Show my Pulse metrics',sf:'Update Salesforce with latest forecast',superstore:'Connect to the Superstore datasource'};
+    showThread();addUser(labels[cap.dataset.cmd]||cap.dataset.cmd);
+    routeCmd(cap.dataset.cmd);return;
+  }
+  // thread caps
+  const capt = t.closest('.cap-t');
+  if(capt && capt.dataset.cmd) {
+    const labels={forecast:'Open my forecast dashboard',discover:'What content do I have access to?',slack:'Share to Slack',deck:'Build my QBR deck',sf:'Update Salesforce',superstore:'Connect to the Superstore datasource',analyst:'Open analyst mode'};
+    addUser(labels[capt.dataset.cmd]||capt.dataset.cmd);
+    routeCmd(capt.dataset.cmd);return;
+  }
+  // run buttons
+  const runEl = t.closest('[data-run]');
+  if(runEl && runEl.dataset.run && !busy) {run(parseInt(runEl.dataset.run));return;}
+  // ss buttons
+  const ssEl = t.closest('[data-ss]');
+  if(ssEl && ssEl.dataset.ss && !busy) {ssQ(ssEl.dataset.ss);return;}
+  // connector buttons
+  const connEl = t.closest('[data-connector]');
+  if(connEl && connEl.dataset.connector) {selectConnector(connEl.dataset.connector);return;}
+  // analyst tiles
+  const aEl = t.closest('[data-analyst]');
+  if(aEl && aEl.dataset.analyst) {const ov=el('analyst-overlay');if(ov)ov.remove();runAnalystFlow(aEl.dataset.analyst);return;}
+  // dismiss nudge
+  if(t.classList.contains('dismiss-nudge')) {t.closest('.nudge-card').remove();return;}
+  // open ss project
+  if(t.classList.contains('open-ss-proj') || t.closest('.open-ss-proj')) {
+    saveSession(activeProj);
+    if(!el('proj-ss-el')){
+      const sbSec=document.querySelector('.sb-sec');
+      const ne=document.createElement('div');ne.className='proj active';ne.id='proj-ss-el';ne.dataset.proj='ss';
+      ne.innerHTML='<div class="proj-name">&#128193; Superstore analysis</div><div class="proj-meta" id="ss-meta">Just created &middot; 0 artifacts</div><div class="proj-tags"><span class="ptag">Superstore</span><span class="ptag">Products</span></div>';
+      sbSec.after(ne);
+    }
+    document.querySelectorAll('.proj').forEach(p=>p.classList.remove('active'));
+    el('proj-ss-el').classList.add('active');
+    activeProj='ss';ssMode=true;sessions.ss.ssMode=true;
+    T().innerHTML='';step=0;initDots();
+    el('ctx-proj').innerHTML='&#128193; Superstore analysis';setCtx('');
+    startSS();return;
+  }
+  // switch to qbr
+  if(t.classList.contains('switch-to-qbr')||t.closest('.switch-to-qbr')){switchProj('qbr');return;}
+  // reset home
+  if(t.classList.contains('reset-home')){
+    el('thread-state').classList.remove('visible');
+    el('home-state').style.display='';
+    T().innerHTML='';step=0;return;
+  }
+  // sidebar projects
+  const proj = t.closest('.proj[data-proj]');
+  if(proj && proj.dataset.proj) {switchProj(proj.dataset.proj);return;}
+  const projEl = t.closest('.proj#proj-ss-el');
+  if(projEl) {switchProj('ss');return;}
+  // analyst badge
+  if(t.closest('#analyst-badge')){showAnalystPanel();return;}
+});
+
+el('home-send').addEventListener('click', homeGo);
+el('home-input').addEventListener('keydown', e=>{if(e.key==='Enter')homeGo();});
+el('thread-send').addEventListener('click', threadGo);
+el('thread-input').addEventListener('keydown', e=>{if(e.key==='Enter')threadGo();});
+
+});
+</script>
+</body>
+</html>
